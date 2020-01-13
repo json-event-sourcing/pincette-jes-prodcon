@@ -14,3 +14,5 @@ Run it as follows:
 ```
 
 It reads from stdin when produceing and writes to stdout when consuming. The format of the configuration file is the same as for your ccloud configuration.
+
+See also the [API documentation](https://www.javadoc.io/doc/net.pincette/pincette-jes-prodcon/latest/index.html).
