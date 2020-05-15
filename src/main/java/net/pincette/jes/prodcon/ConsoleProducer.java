@@ -18,7 +18,7 @@ import java.util.Properties;
 import javax.json.JsonValue;
 import net.pincette.function.SideEffect;
 import net.pincette.jes.util.JsonSerializer;
-import net.pincette.util.Json;
+import net.pincette.json.JsonUtil;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -55,8 +55,8 @@ public class ConsoleProducer {
                 createReliableProducer(asMap(config), new StringSerializer(), new JsonSerializer()),
             producer ->
                 composeAsyncStream(
-                        net.pincette.jf.Util.stream(createParser(in))
-                            .filter(Json::isObject)
+                        net.pincette.json.filter.Util.stream(createParser(in))
+                            .filter(JsonUtil::isObject)
                             .map(JsonValue::asJsonObject)
                             .filter(json -> json.containsKey(ID))
                             .map(
