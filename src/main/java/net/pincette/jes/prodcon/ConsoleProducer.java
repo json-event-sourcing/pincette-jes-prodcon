@@ -15,6 +15,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.function.Predicate;
+import javax.json.JsonObject;
 import javax.json.JsonValue;
 import net.pincette.function.SideEffect;
 import net.pincette.jes.util.JsonSerializer;
@@ -50,6 +52,24 @@ public class ConsoleProducer {
    * @return Returns <code>true</code> if the operation was successful.
    */
   public static boolean produce(final Properties config, final String topic, final InputStream in) {
+    return produce(config, topic, in, json -> true);
+  }
+
+  /**
+   * Reads JSON from <code>in</code> and produces JES serialized messages on <code>topic</code>.
+   *
+   * @param config the Kafka configuration.
+   * @param topic the topic to produce on.
+   * @param in a JSON object or a JSON object array. The field "_id" is used as the message key.
+   * @param filter a filter to eliminate certain objects.
+   * @return Returns <code>true</code> if the operation was successful.
+   * @since 1.0.2
+   */
+  public static boolean produce(
+      final Properties config,
+      final String topic,
+      final InputStream in,
+      final Predicate<JsonObject> filter) {
     return tryToGetWithRethrow(
             () ->
                 createReliableProducer(asMap(config), new StringSerializer(), new JsonSerializer()),
@@ -58,6 +78,7 @@ public class ConsoleProducer {
                         net.pincette.json.filter.Util.stream(createParser(in))
                             .filter(JsonUtil::isObject)
                             .map(JsonValue::asJsonObject)
+                            .filter(filter)
                             .filter(json -> json.containsKey(ID))
                             .map(
                                 json ->

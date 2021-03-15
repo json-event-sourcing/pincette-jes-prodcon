@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Properties;
+import java.util.function.Predicate;
 import javax.json.JsonObject;
 import net.pincette.jes.util.JsonDeserializer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -38,6 +39,25 @@ public class ConsoleConsumer {
    */
   public static boolean consume(
       final Properties config, final String topic, final OutputStream out) {
+    return consume(config, topic, out, json -> true);
+  }
+
+  /**
+   * Consumes JSON records from <code>topic</code> which are serialized with the JES JSON serializer
+   * and writes them to <code>out</code>.
+   *
+   * @param config the Kafka configuration. The "group.id" is always set to a UUID.
+   * @param topic the topic to consume.
+   * @param out the output stream.
+   * @param filter a filter to eliminate certain objects.
+   * @return This method runs forever.
+   * @since 1.0.2
+   */
+  public static boolean consume(
+      final Properties config,
+      final String topic,
+      final OutputStream out,
+      final Predicate<JsonObject> filter) {
     final PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, UTF_8));
 
     config.setProperty("group.id", randomUUID().toString());
@@ -50,6 +70,7 @@ public class ConsoleConsumer {
           doForever(
               () ->
                   stream(consumer.poll(ofSeconds(1)).iterator())
+                      .filter(record -> filter.test(record.value()))
                       .forEach(record -> print(record, writer)));
         });
 
